@@ -24,8 +24,15 @@ builder.Services.AddCors(options =>
 });
 
 // Configure Supabase Client
-var supabaseUrl = builder.Configuration["Supabase:Url"]!;
-var supabaseKey = builder.Configuration["Supabase:ServiceRoleKey"]!;
+var supabaseUrl = builder.Configuration["Supabase:Url"] ?? Environment.GetEnvironmentVariable("Supabase__Url");
+var supabaseKey = builder.Configuration["Supabase:AnonKey"] ?? Environment.GetEnvironmentVariable("Supabase__AnonKey");
+
+if (string.IsNullOrEmpty(supabaseUrl) || string.IsNullOrEmpty(supabaseKey))
+{
+    throw new InvalidOperationException("Supabase configuration is missing. Please set Supabase__Url and Supabase__AnonKey environment variables.");
+}
+
+Console.WriteLine($"Initializing Supabase client with URL: {supabaseUrl}");
 
 builder.Services.AddScoped<Client>(_ =>
 {
@@ -40,21 +47,31 @@ builder.Services.AddScoped<Client>(_ =>
     return client;
 });
 
-// Configure JWT Authentication
-var jwtSecret = builder.Configuration["Supabase:JwtSecret"]!;
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
+// Configure JWT Authentication (optional)
+var jwtSecret = builder.Configuration["Supabase:JwtSecret"] ?? Environment.GetEnvironmentVariable("Supabase__JwtSecret");
+
+if (!string.IsNullOrEmpty(jwtSecret))
+{
+    Console.WriteLine("JWT authentication enabled");
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
         {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
-        };
-    });
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            };
+        });
+}
+else
+{
+    Console.WriteLine("JWT authentication disabled (no secret configured)");
+    builder.Services.AddAuthentication();
+}
 
 // Configure Authorization Policies
 builder.Services.AddAuthorization(options =>
