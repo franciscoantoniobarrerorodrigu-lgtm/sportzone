@@ -57,15 +57,34 @@ builder.Services.AddSignalR();
 
 // ── CORS para Angular ────────────────────────────────────────
 builder.Services.AddCors(o => o.AddPolicy("Angular", p =>
-    p.WithOrigins(
+{
+    // Permitir localhost para desarrollo
+    var origins = new List<string>
+    {
         "http://localhost:4200",
-        "https://sportzone.app",
-        "https://sportzone-hdl8io6ja.vercel.app",
-        "https://sportzone-web.vercel.app"
-     )
-     .AllowAnyHeader()
-     .AllowAnyMethod()
-     .AllowCredentials()));
+        "https://sportzone.app"
+    };
+    
+    // Permitir todos los subdominios de Vercel en producción
+    p.SetIsOriginAllowed(origin =>
+    {
+        if (string.IsNullOrEmpty(origin)) return false;
+        
+        // Permitir localhost
+        if (origin.StartsWith("http://localhost")) return true;
+        
+        // Permitir dominios de Vercel
+        if (origin.Contains(".vercel.app")) return true;
+        
+        // Permitir dominio principal
+        if (origin == "https://sportzone.app") return true;
+        
+        return false;
+    })
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    .AllowCredentials();
+}));
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
