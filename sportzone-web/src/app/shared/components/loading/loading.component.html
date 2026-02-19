@@ -1,0 +1,14 @@
+<div class="loading-container" [class.fullscreen]="fullScreen" [class]="'loading-' + size">
+  <div class="spinner-wrapper">
+    <div class="spinner">
+      <div class="spinner-ring"></div>
+      <div class="spinner-ring"></div>
+      <div class="spinner-ring"></div>
+      <div class="spinner-logo">⚽</div>
+    </div>
+    
+    @if (message) {
+      <p class="loading-message">{{ message }}</p>
+    }
+  </div>
+</div>

@@ -1,0 +1,10 @@
+node_modules
+.angular
+*.spec.ts
+*.test.ts
+coverage
+.vscode
+.idea
+*.log
+.env.local
+.DS_Store

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignalR Test Client - SportZone Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@7.0.0/dist/browser/signalr.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #06090F 0%, #0A1628 100%);
+            color: white;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00D4FF;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+        }
+
+        .status {
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.connected {
+            background: #00FF00;
+        }
+
+        .status-indicator.disconnected {
+            background: #FF0000;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .controls {
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #00D4FF;
+            font-weight: 600;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            font-size: 16px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #00D4FF, #0099CC);
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .logs {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .log-entry.info {
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 3px solid #00D4FF;
+        }
+
+        .log-entry.success {
+            background: rgba(0, 255, 0, 0.1);
+            border-left: 3px solid #00FF00;
+        }
+
+        .log-entry.error {
+            background: rgba(255, 0, 0, 0.1);
+            border-left: 3px solid #FF0000;
+        }
+
+        .log-entry.event {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 3px solid #FFD700;
+        }
+
+        .timestamp {
+            color: #888;
+            font-size: 12px;
+            margin-right: 10px;
+        }
+
+        .clear-logs {
+            background: rgba(255, 45, 85, 0.8);
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔴 SignalR Test Client</h1>
+
+        <div class="status">
+            <h2>
+                <span class="status-indicator" id="statusIndicator"></span>
+                Estado: <span id="statusText">Desconectado</span>
+            </h2>
+            <p>Connection ID: <strong id="connectionId">-</strong></p>
+        </div>
+
+        <div class="controls">
+            <h2>Controles</h2>
+            
+            <div class="control-group">
+                <label for="hubUrl">SignalR Hub URL:</label>
+                <input type="text" id="hubUrl" value="http://localhost:5000/hubs/partido" placeholder="http://localhost:5000/hubs/partido">
+            </div>
+
+            <div class="button-group">
+                <button id="connectBtn" onclick="connect()">Conectar</button>
+                <button id="disconnectBtn" onclick="disconnect()" disabled>Desconectar</button>
+            </div>
+
+            <div class="control-group">
+                <label for="partidoId">ID del Partido:</label>
+                <input type="text" id="partidoId" placeholder="uuid-del-partido" value="test-partido-1">
+            </div>
+
+            <div class="button-group">
+                <button id="subscribeBtn" onclick="suscribirPartido()" disabled>Suscribir a Partido</button>
+                <button id="unsubscribeBtn" onclick="desuscribirPartido()" disabled>Desuscribir</button>
+            </div>
+
+            <button onclick="suscribirEnVivo()" disabled id="liveBtn">Suscribir a Partidos en Vivo</button>
+        </div>
+
+        <div class="logs">
+            <button class="clear-logs" onclick="clearLogs()">Limpiar Logs</button>
+            <div id="logs"></div>
+        </div>
+    </div>
+
+    <script>
+        let connection = null;
+        let isConnected = false;
+
+        function log(message, type = 'info') {
+            const logsDiv = document.getElementById('logs');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            entry.innerHTML = `<span class="timestamp">[${timestamp}]</span>${message}`;
+            
+            logsDiv.appendChild(entry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        function updateStatus(connected) {
+            isConnected = connected;
+            const indicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            const connectionIdEl = document.getElementById('connectionId');
+
+            if (connected) {
+                indicator.className = 'status-indicator connected';
+                statusText.textContent = 'Conectado';
+                connectionIdEl.textContent = connection.connectionId || '-';
+                
+                document.getElementById('connectBtn').disabled = true;
+                document.getElementById('disconnectBtn').disabled = false;
+                document.getElementById('subscribeBtn').disabled = false;
+                document.getElementById('unsubscribeBtn').disabled = false;
+                document.getElementById('liveBtn').disabled = false;
+            } else {
+                indicator.className = 'status-indicator disconnected';
+                statusText.textContent = 'Desconectado';
+                connectionIdEl.textContent = '-';
+                
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('disconnectBtn').disabled = true;
+                document.getElementById('subscribeBtn').disabled = true;
+                document.getElementById('unsubscribeBtn').disabled = true;
+                document.getElementById('liveBtn').disabled = true;
+            }
+        }
+
+        async function connect() {
+            const hubUrl = document.getElementById('hubUrl').value;
+            
+            if (!hubUrl) {
+                log('Por favor ingresa la URL del hub', 'error');
+                return;
+            }
+
+            log(`Conectando a ${hubUrl}...`, 'info');
+
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl(hubUrl)
+                .withAutomaticReconnect()
+                .configureLogging(signalR.LogLevel.Information)
+                .build();
+
+            // Event handlers
+            connection.onreconnecting(() => {
+                log('Reconectando...', 'info');
+                updateStatus(false);
+            });
+
+            connection.onreconnected((connectionId) => {
+                log(`Reconectado con ID: ${connectionId}`, 'success');
+                updateStatus(true);
+            });
+
+            connection.onclose((error) => {
+                if (error) {
+                    log(`Conexión cerrada con error: ${error}`, 'error');
+                } else {
+                    log('Conexión cerrada', 'info');
+                }
+                updateStatus(false);
+            });
+
+            // SignalR event listeners
+            connection.on('Suscrito', (partidoId) => {
+                log(`✅ Suscrito al partido: ${partidoId}`, 'success');
+            });
+
+            connection.on('Desuscrito', (partidoId) => {
+                log(`❌ Desuscrito del partido: ${partidoId}`, 'info');
+            });
+
+            connection.on('SuscritoEnVivo', () => {
+                log(`✅ Suscrito a partidos en vivo`, 'success');
+            });
+
+            connection.on('NuevoEvento', (data) => {
+                log(`⚽ Nuevo Evento: ${JSON.stringify(data)}`, 'event');
+            });
+
+            connection.on('MarcadorActualizado', (data) => {
+                log(`📊 Marcador: ${data.golesLocal} - ${data.golesVisita}`, 'event');
+            });
+
+            connection.on('MinutoActualizado', (data) => {
+                log(`⏱️ Minuto: ${data.minuto}'`, 'event');
+            });
+
+            connection.on('PartidoIniciado', (data) => {
+                log(`🟢 Partido iniciado: ${data.partidoId}`, 'event');
+            });
+
+            connection.on('PartidoFinalizado', (data) => {
+                log(`🔴 Partido finalizado: ${data.partidoId}`, 'event');
+            });
+
+            try {
+                await connection.start();
+                log(`✅ Conectado exitosamente! Connection ID: ${connection.connectionId}`, 'success');
+                updateStatus(true);
+            } catch (err) {
+                log(`❌ Error al conectar: ${err}`, 'error');
+                updateStatus(false);
+            }
+        }
+
+        async function disconnect() {
+            if (connection) {
+                try {
+                    await connection.stop();
+                    log('Desconectado', 'info');
+                    updateStatus(false);
+                } catch (err) {
+                    log(`Error al desconectar: ${err}`, 'error');
+                }
+            }
+        }
+
+        async function suscribirPartido() {
+            const partidoId = document.getElementById('partidoId').value;
+            
+            if (!partidoId) {
+                log('Por favor ingresa un ID de partido', 'error');
+                return;
+            }
+
+            try {
+                await connection.invoke('SuscribirPartido', partidoId);
+                log(`Suscribiendo al partido ${partidoId}...`, 'info');
+            } catch (err) {
+                log(`Error al suscribir: ${err}`, 'error');
+            }
+        }
+
+        async function desuscribirPartido() {
+            const partidoId = document.getElementById('partidoId').value;
+            
+            if (!partidoId) {
+                log('Por favor ingresa un ID de partido', 'error');
+                return;
+            }
+
+            try {
+                await connection.invoke('DesuscribirPartido', partidoId);
+                log(`Desuscribiendo del partido ${partidoId}...`, 'info');
+            } catch (err) {
+                log(`Error al desuscribir: ${err}`, 'error');
+            }
+        }
+
+        async function suscribirEnVivo() {
+            try {
+                await connection.invoke('SuscribirPartidosEnVivo');
+                log('Suscribiendo a partidos en vivo...', 'info');
+            } catch (err) {
+                log(`Error al suscribir a en vivo: ${err}`, 'error');
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+            log('Logs limpiados', 'info');
+        }
+
+        // Initialize
+        updateStatus(false);
+        log('Cliente de prueba SignalR iniciado', 'info');
+        log('Instrucciones:', 'info');
+        log('1. Verifica que el backend esté corriendo en http://localhost:5000', 'info');
+        log('2. Click en "Conectar" para establecer conexión', 'info');
+        log('3. Ingresa un ID de partido y click en "Suscribir a Partido"', 'info');
+        log('4. Abre múltiples ventanas para probar broadcast', 'info');
+    </script>
+</body>
+</html>

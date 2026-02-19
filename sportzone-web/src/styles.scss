@@ -1,0 +1,179 @@
+/* Importar fuentes de Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&display=swap');
+
+/* Variables de tema oscuro tipo ESPN */
+:root {
+  --color-primary: #06090F;
+  --color-secondary: #1A1D29;
+  --color-accent: #00D9FF;
+  --color-success: #00FF87;
+  --color-warning: #FFB800;
+  --color-danger: #FF3838;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #B0B3B8;
+  --color-border: #2A2D3A;
+  --color-hover: #252836;
+  
+  --font-primary: 'Bebas Neue', sans-serif;
+  --font-secondary: 'Barlow', sans-serif;
+  
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  --border-radius: 8px;
+  --transition: all 0.3s ease;
+}
+
+/* Reset y estilos base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-secondary);
+  background-color: var(--color-primary);
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-primary);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+  transition: var(--transition);
+  
+  &:hover {
+    color: var(--color-success);
+  }
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+  
+  &:hover {
+    background: var(--color-accent);
+  }
+}
+
+/* Utilidades */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+}
+
+.card {
+  background: var(--color-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  transition: var(--transition);
+  
+  &:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
+  }
+}
+
+.btn {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: none;
+  border-radius: var(--border-radius);
+  font-family: var(--font-primary);
+  font-size: 16px;
+  cursor: pointer;
+  transition: var(--transition);
+  
+  &-primary {
+    background: var(--color-accent);
+    color: var(--color-primary);
+    
+    &:hover {
+      background: var(--color-success);
+    }
+  }
+  
+  &-secondary {
+    background: var(--color-secondary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    
+    &:hover {
+      border-color: var(--color-accent);
+    }
+  }
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  
+  &-success {
+    background: var(--color-success);
+    color: var(--color-primary);
+  }
+  
+  &-warning {
+    background: var(--color-warning);
+    color: var(--color-primary);
+  }
+  
+  &-danger {
+    background: var(--color-danger);
+    color: white;
+  }
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}

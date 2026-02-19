@@ -1,0 +1,21 @@
+<div 
+  class="card-equipo" 
+  [class.clickable]="clickable"
+  [style.--team-color]="equipo.color_primario"
+  (click)="onCardClick()">
+  
+  <div class="escudo-container">
+    <img 
+      [src]="equipo.escudo_url" 
+      [alt]="equipo.nombre"
+      class="escudo"
+      loading="lazy">
+  </div>
+  
+  <div class="equipo-info">
+    <h3 class="equipo-nombre">{{ equipo.nombre }}</h3>
+    <span class="equipo-abreviatura">{{ equipo.abreviatura }}</span>
+  </div>
+  
+  <div class="accent-bar"></div>
+</div>

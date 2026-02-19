@@ -1,0 +1,352 @@
+<div class="admin-partidos-container">
+  <!-- Header -->
+  <header class="page-header">
+    <h1>Administración de Partidos</h1>
+    <button class="btn-primary" (click)="openCreateModal()">
+      <span class="icon">+</span>
+      Crear Nuevo Partido
+    </button>
+  </header>
+
+  <!-- Success Message -->
+  @if (successMessage()) {
+    <div class="alert alert-success">
+      {{ successMessage() }}
+    </div>
+  }
+
+  <!-- Error Message -->
+  @if (error() && !showModal()) {
+    <div class="alert alert-error">
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Filtros -->
+  <section class="filtros-section">
+    <div class="filtro-group">
+      <label for="filtro-torneo">Torneo:</label>
+      <select 
+        id="filtro-torneo"
+        [value]="filtroTorneoId()"
+        (change)="filtroTorneoId.set($any($event.target).value); applyFilters()"
+        class="select-filtro">
+        <option value="">Todos los torneos</option>
+        @for (torneo of torneos(); track torneo.id) {
+          <option [value]="torneo.id">{{ torneo.nombre }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="filtro-group">
+      <label for="filtro-estado">Estado:</label>
+      <select 
+        id="filtro-estado"
+        [value]="filtroEstado()"
+        (change)="filtroEstado.set($any($event.target).value); applyFilters()"
+        class="select-filtro">
+        <option value="">Todos los estados</option>
+        <option value="programado">Programado</option>
+        <option value="en_vivo">En Vivo</option>
+        <option value="finalizado">Finalizado</option>
+        <option value="suspendido">Suspendido</option>
+      </select>
+    </div>
+  </section>
+
+  <!-- Loading Spinner -->
+  @if (loading()) {
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+      <p>Cargando...</p>
+    </div>
+  }
+
+  <!-- Tabla de Partidos -->
+  @if (!loading()) {
+    <section class="tabla-section">
+      <div class="tabla-responsive">
+        <table class="tabla-partidos">
+          <thead>
+            <tr>
+              <th>Torneo</th>
+              <th>Jornada</th>
+              <th>Equipos</th>
+              <th>Fecha</th>
+              <th>Estadio</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (partidos().length === 0) {
+              <tr>
+                <td colspan="7" class="no-data">
+                  No hay partidos disponibles
+                </td>
+              </tr>
+            }
+            @for (partido of partidos(); track partido.id) {
+              <tr>
+                <td>{{ partido.torneoNombre }}</td>
+                <td class="text-center">{{ partido.jornada }}</td>
+                <td class="equipos-cell">
+                  <div class="equipos-display">
+                    <span class="equipo-nombre">{{ partido.equipoLocalNombre }}</span>
+                    <span class="vs">vs</span>
+                    <span class="equipo-nombre">{{ partido.equipoVisitaNombre }}</span>
+                  </div>
+                </td>
+                <td>{{ formatFecha(partido.fechaHora) }}</td>
+                <td>{{ partido.estadio || '-' }}</td>
+                <td>
+                  <span class="badge" [ngClass]="getEstadoClass(partido.estado)">
+                    {{ getEstadoText(partido.estado) }}
+                  </span>
+                </td>
+                <td class="acciones-cell">
+                  <button 
+                    class="btn-icon btn-edit" 
+                    (click)="openEditModal(partido)"
+                    title="Editar">
+                    ✏️
+                  </button>
+                  <button 
+                    class="btn-icon btn-delete" 
+                    (click)="confirmDelete(partido)"
+                    title="Eliminar">
+                    🗑️
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación -->
+      @if (totalPages() > 1) {
+        <div class="paginacion">
+          <button 
+            class="btn-paginacion" 
+            (click)="prevPage()"
+            [disabled]="currentPage() === 1">
+            ← Anterior
+          </button>
+          
+          <span class="paginacion-info">
+            Página {{ currentPage() }} de {{ totalPages() }}
+            ({{ totalCount() }} partidos)
+          </span>
+          
+          <button 
+            class="btn-paginacion" 
+            (click)="nextPage()"
+            [disabled]="currentPage() === totalPages()">
+            Siguiente →
+          </button>
+        </div>
+      }
+    </section>
+  }
+
+  <!-- Modal de Formulario (Crear/Editar) -->
+  @if (showModal()) {
+    <div class="modal-overlay" (click)="closeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ editMode() ? 'Editar Partido' : 'Crear Nuevo Partido' }}</h2>
+          <button class="btn-close" (click)="closeModal()">×</button>
+        </div>
+
+        <form [formGroup]="partidoForm" (ngSubmit)="onSubmit()">
+          <div class="modal-body">
+            <!-- Error Message in Modal -->
+            @if (error()) {
+              <div class="alert alert-error">
+                {{ error() }}
+              </div>
+            }
+
+            <!-- Torneo -->
+            <div class="form-group">
+              <label for="torneoId">Torneo *</label>
+              <select 
+                id="torneoId"
+                formControlName="torneoId"
+                class="form-control"
+                [class.invalid]="partidoForm.get('torneoId')?.invalid && partidoForm.get('torneoId')?.touched">
+                <option value="">Seleccione un torneo</option>
+                @for (torneo of torneos(); track torneo.id) {
+                  <option [value]="torneo.id">{{ torneo.nombre }}</option>
+                }
+              </select>
+              @if (getFieldError('torneoId')) {
+                <span class="error-message">{{ getFieldError('torneoId') }}</span>
+              }
+            </div>
+
+            <!-- Jornada -->
+            <div class="form-group">
+              <label for="jornada">Jornada *</label>
+              <input 
+                type="number"
+                id="jornada"
+                formControlName="jornada"
+                class="form-control"
+                min="1"
+                [class.invalid]="partidoForm.get('jornada')?.invalid && partidoForm.get('jornada')?.touched">
+              @if (getFieldError('jornada')) {
+                <span class="error-message">{{ getFieldError('jornada') }}</span>
+              }
+            </div>
+
+            <!-- Equipo Local -->
+            <div class="form-group">
+              <label for="equipoLocalId">Equipo Local *</label>
+              <select 
+                id="equipoLocalId"
+                formControlName="equipoLocalId"
+                class="form-control"
+                [class.invalid]="partidoForm.get('equipoLocalId')?.invalid && partidoForm.get('equipoLocalId')?.touched">
+                <option value="">Seleccione equipo local</option>
+                @for (equipo of equipos(); track equipo.id) {
+                  <option [value]="equipo.id">{{ equipo.nombre }}</option>
+                }
+              </select>
+              @if (getFieldError('equipoLocalId')) {
+                <span class="error-message">{{ getFieldError('equipoLocalId') }}</span>
+              }
+            </div>
+
+            <!-- Equipo Visitante -->
+            <div class="form-group">
+              <label for="equipoVisitaId">Equipo Visitante *</label>
+              <select 
+                id="equipoVisitaId"
+                formControlName="equipoVisitaId"
+                class="form-control"
+                [class.invalid]="partidoForm.get('equipoVisitaId')?.invalid && partidoForm.get('equipoVisitaId')?.touched">
+                <option value="">Seleccione equipo visitante</option>
+                @for (equipo of equipos(); track equipo.id) {
+                  <option [value]="equipo.id">{{ equipo.nombre }}</option>
+                }
+              </select>
+              @if (getFieldError('equipoVisitaId')) {
+                <span class="error-message">{{ getFieldError('equipoVisitaId') }}</span>
+              }
+            </div>
+
+            <!-- Error de equipos iguales -->
+            @if (hasEquiposIgualesError) {
+              <div class="alert alert-error">
+                Un equipo no puede jugar contra sí mismo
+              </div>
+            }
+
+            <!-- Fecha y Hora -->
+            <div class="form-group">
+              <label for="fechaHora">Fecha y Hora *</label>
+              <input 
+                type="datetime-local"
+                id="fechaHora"
+                formControlName="fechaHora"
+                class="form-control"
+                [class.invalid]="partidoForm.get('fechaHora')?.invalid && partidoForm.get('fechaHora')?.touched">
+              @if (getFieldError('fechaHora')) {
+                <span class="error-message">{{ getFieldError('fechaHora') }}</span>
+              }
+            </div>
+
+            <!-- Estadio -->
+            <div class="form-group">
+              <label for="estadio">Estadio</label>
+              <input 
+                type="text"
+                id="estadio"
+                formControlName="estadio"
+                class="form-control"
+                placeholder="Nombre del estadio">
+            </div>
+
+            <!-- Estado -->
+            <div class="form-group">
+              <label for="estado">Estado *</label>
+              <select 
+                id="estado"
+                formControlName="estado"
+                class="form-control"
+                [class.invalid]="partidoForm.get('estado')?.invalid && partidoForm.get('estado')?.touched">
+                @for (estado of estadosDisponibles; track estado) {
+                  <option [value]="estado">{{ getEstadoText(estado) }}</option>
+                }
+              </select>
+              @if (getFieldError('estado')) {
+                <span class="error-message">{{ getFieldError('estado') }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button 
+              type="button" 
+              class="btn-secondary" 
+              (click)="closeModal()"
+              [disabled]="loading()">
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              class="btn-primary"
+              [disabled]="partidoForm.invalid || loading()">
+              {{ loading() ? 'Guardando...' : (editMode() ? 'Actualizar' : 'Crear') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Modal de Confirmación de Eliminación -->
+  @if (showDeleteModal()) {
+    <div class="modal-overlay" (click)="closeDeleteModal()">
+      <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Confirmar Eliminación</h2>
+          <button class="btn-close" (click)="closeDeleteModal()">×</button>
+        </div>
+
+        <div class="modal-body">
+          <p>¿Está seguro de eliminar este partido?</p>
+          @if (partidoSeleccionado()) {
+            <div class="partido-info">
+              <strong>{{ partidoSeleccionado()!.equipoLocalNombre }}</strong>
+              vs
+              <strong>{{ partidoSeleccionado()!.equipoVisitaNombre }}</strong>
+              <br>
+              <small>{{ formatFecha(partidoSeleccionado()!.fechaHora) }}</small>
+            </div>
+          }
+          <p class="warning-text">Esta acción no se puede deshacer.</p>
+        </div>
+
+        <div class="modal-footer">
+          <button 
+            type="button" 
+            class="btn-secondary" 
+            (click)="closeDeleteModal()"
+            [disabled]="loading()">
+            Cancelar
+          </button>
+          <button 
+            type="button" 
+            class="btn-danger" 
+            (click)="onDelete()"
+            [disabled]="loading()">
+            {{ loading() ? 'Eliminando...' : 'Eliminar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

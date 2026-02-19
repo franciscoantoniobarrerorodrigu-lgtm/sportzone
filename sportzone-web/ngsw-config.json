@@ -1,0 +1,71 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "resources": {
+        "files": [
+          "/favicon.ico",
+          "/index.html",
+          "/manifest.webmanifest",
+          "/*.css",
+          "/*.js"
+        ]
+      }
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/assets/**",
+          "/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2)"
+        ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "api-fresh",
+      "urls": [
+        "https://api.sportzone.app/api/partidos/en-vivo",
+        "https://api.sportzone.app/api/partidos/*/eventos"
+      ],
+      "cacheConfig": {
+        "maxSize": 50,
+        "maxAge": "30s",
+        "timeout": "5s",
+        "strategy": "freshness"
+      }
+    },
+    {
+      "name": "api-cache",
+      "urls": [
+        "https://api.sportzone.app/api/liga/posiciones/*",
+        "https://api.sportzone.app/api/goleadores/*",
+        "https://api.sportzone.app/api/partidos/proximos"
+      ],
+      "cacheConfig": {
+        "maxSize": 100,
+        "maxAge": "1h",
+        "timeout": "10s",
+        "strategy": "performance"
+      }
+    },
+    {
+      "name": "supabase-api",
+      "urls": [
+        "https://*.supabase.co/rest/v1/**"
+      ],
+      "cacheConfig": {
+        "maxSize": 100,
+        "maxAge": "30m",
+        "timeout": "10s",
+        "strategy": "freshness"
+      }
+    }
+  ]
+}

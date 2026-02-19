@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>SportZone Pro</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <meta name="description" content="Sistema de gestión de campeonatos deportivos profesionales">
+  <meta name="theme-color" content="#00D4FF">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+</head>
+<body>
+  <app-root></app-root>
+  
+  <script>
+    // Registrar Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('Service Worker registrado con éxito:', registration.scope);
+          })
+          .catch((error) => {
+            console.log('Error al registrar Service Worker:', error);
+          });
+      });
+    }
+  </script>
+</body>
+</html>

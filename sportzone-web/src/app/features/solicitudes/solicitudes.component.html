@@ -1,0 +1,223 @@
+<div class="solicitudes-container">
+  <div class="header">
+    <h1 class="page-title">SOLICITUDES</h1>
+    <button class="btn-primary" (click)="abrirFormularioCrear()">
+      ➕ Nueva Solicitud
+    </button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filtros">
+    <div class="filtro-group">
+      <label>Estado:</label>
+      <select [(ngModel)]="filtroEstado" (change)="aplicarFiltros()" class="select-filtro">
+        <option value="">Todos</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="en_revision">En Revisión</option>
+        <option value="aprobado">Aprobado</option>
+        <option value="rechazado">Rechazado</option>
+        <option value="cancelado">Cancelado</option>
+      </select>
+    </div>
+
+    <div class="filtro-group">
+      <label>Tipo:</label>
+      <select [(ngModel)]="filtroTipo" (change)="aplicarFiltros()" class="select-filtro">
+        <option value="">Todos</option>
+        <option value="marketing">Marketing</option>
+        <option value="traspaso">Traspaso</option>
+        <option value="patrocinio">Patrocinio</option>
+        <option value="medios">Medios</option>
+        <option value="disciplina">Disciplina</option>
+        <option value="administrativa">Administrativa</option>
+        <option value="tecnica">Técnica</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Lista de Solicitudes -->
+  @if (loading()) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Cargando solicitudes...</p>
+    </div>
+  } @else {
+    <div class="solicitudes-list">
+      @for (solicitud of solicitudes(); track solicitud.id) {
+        <div class="solicitud-card">
+          <div class="card-header">
+            <div class="titulo-section">
+              <h3 class="titulo">{{ solicitud.titulo }}</h3>
+              <span class="badge-tipo" [attr.data-tipo]="solicitud.tipo">
+                {{ getTipoLabel(solicitud.tipo) }}
+              </span>
+            </div>
+            <div class="badges">
+              <span class="badge-estado" [attr.data-estado]="solicitud.estado">
+                {{ getEstadoLabel(solicitud.estado) }}
+              </span>
+              <span class="badge-prioridad" [attr.data-prioridad]="solicitud.prioridad">
+                {{ getPrioridadLabel(solicitud.prioridad) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="card-body">
+            @if (solicitud.descripcion) {
+              <p class="descripcion">{{ solicitud.descripcion }}</p>
+            }
+            
+            <div class="metadata">
+              @if (solicitud.solicitante) {
+                <span class="meta-item">👤 {{ solicitud.solicitante }}</span>
+              }
+              @if (solicitud.equipoNombre) {
+                <span class="meta-item">⚽ {{ solicitud.equipoNombre }}</span>
+              }
+              @if (solicitud.monto) {
+                <span class="meta-item">💰 ${{ solicitud.monto.toLocaleString() }}</span>
+              }
+              <span class="meta-item">📅 {{ formatDate(solicitud.createdAt) }}</span>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            @if (solicitud.estado === 'pendiente' || solicitud.estado === 'en_revision') {
+              <button class="btn-success" (click)="aprobarSolicitud(solicitud)">
+                ✓ Aprobar
+              </button>
+              <button class="btn-danger" (click)="rechazarSolicitud(solicitud)">
+                ✗ Rechazar
+              </button>
+            }
+            <button class="btn-secondary" (click)="verDetalle(solicitud)">
+              👁 Ver Detalle
+            </button>
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-state">
+          <p>No hay solicitudes que coincidan con los filtros</p>
+        </div>
+      }
+    </div>
+
+    <!-- Paginación -->
+    @if (totalPages() > 1) {
+      <div class="paginacion">
+        <button 
+          class="btn-page" 
+          [disabled]="paginaActual() === 1"
+          (click)="cambiarPagina(paginaActual() - 1)"
+        >
+          ← Anterior
+        </button>
+        
+        <span class="page-info">
+          Página {{ paginaActual() }} de {{ totalPages() }}
+        </span>
+        
+        <button 
+          class="btn-page" 
+          [disabled]="paginaActual() === totalPages()"
+          (click)="cambiarPagina(paginaActual() + 1)"
+        >
+          Siguiente →
+        </button>
+      </div>
+    }
+  }
+
+  <!-- Modal de Creación -->
+  @if (mostrarFormulario()) {
+    <div class="modal-overlay" (click)="cerrarFormulario()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Nueva Solicitud</h2>
+          <button class="btn-close" (click)="cerrarFormulario()">✕</button>
+        </div>
+
+        <form class="form" (ngSubmit)="crearSolicitud()">
+          <div class="form-group">
+            <label>Tipo *</label>
+            <select [(ngModel)]="nuevaSolicitud.tipo" name="tipo" required class="form-control">
+              <option value="">Seleccionar...</option>
+              <option value="marketing">Marketing</option>
+              <option value="traspaso">Traspaso</option>
+              <option value="patrocinio">Patrocinio</option>
+              <option value="medios">Medios</option>
+              <option value="disciplina">Disciplina</option>
+              <option value="administrativa">Administrativa</option>
+              <option value="tecnica">Técnica</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Título *</label>
+            <input 
+              type="text" 
+              [(ngModel)]="nuevaSolicitud.titulo" 
+              name="titulo"
+              required
+              class="form-control"
+              placeholder="Título de la solicitud"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Descripción</label>
+            <textarea 
+              [(ngModel)]="nuevaSolicitud.descripcion" 
+              name="descripcion"
+              class="form-control"
+              rows="4"
+              placeholder="Descripción detallada..."
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Solicitante</label>
+            <input 
+              type="text" 
+              [(ngModel)]="nuevaSolicitud.solicitante" 
+              name="solicitante"
+              class="form-control"
+              placeholder="Nombre del solicitante"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Monto</label>
+            <input 
+              type="number" 
+              [(ngModel)]="nuevaSolicitud.monto" 
+              name="monto"
+              class="form-control"
+              placeholder="0.00"
+              step="0.01"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Prioridad</label>
+            <select [(ngModel)]="nuevaSolicitud.prioridad" name="prioridad" class="form-control">
+              <option value="baja">Baja</option>
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+              <option value="urgente">Urgente</option>
+            </select>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="cerrarFormulario()">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-primary" [disabled]="guardando()">
+              {{ guardando() ? 'Guardando...' : 'Crear Solicitud' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

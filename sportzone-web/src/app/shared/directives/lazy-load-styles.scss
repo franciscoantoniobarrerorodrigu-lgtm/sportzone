@@ -1,0 +1,220 @@
+/**
+ * Estilos recomendados para LazyLoadDirective
+ * 
+ * Agrega estos estilos a tu archivo global styles.scss o importa este archivo:
+ * @import 'app/shared/directives/lazy-load-styles.scss';
+ */
+
+// Estilos base para imágenes con lazy loading
+img[appLazyLoad] {
+  transition: opacity 0.3s ease-in-out;
+  display: block;
+  
+  // Estado: Cargando
+  &.lazy-loading {
+    opacity: 0.6;
+    background: linear-gradient(
+      90deg,
+      #1a1a1a 25%,
+      #2a2a2a 50%,
+      #1a1a1a 75%
+    );
+    background-size: 200% 100%;
+    animation: loading-shimmer 1.5s infinite;
+  }
+  
+  // Estado: Cargada exitosamente
+  &.lazy-loaded {
+    opacity: 1;
+    animation: fade-in 0.3s ease-in-out;
+  }
+  
+  // Estado: Error de carga
+  &.lazy-error {
+    opacity: 0.5;
+    border: 2px solid #ff2d55;
+    background-color: #2a2a2a;
+    position: relative;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    // Icono de error
+    &::after {
+      content: '⚠️';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      opacity: 0.7;
+    }
+  }
+}
+
+// Animación de shimmer para estado de carga
+@keyframes loading-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+// Animación de fade-in para imagen cargada
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// Variantes de tamaño para diferentes casos de uso
+.lazy-image {
+  // Escudos pequeños (tabla de posiciones)
+  &--escudo-mini {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+  }
+  
+  // Escudos medianos (cards)
+  &--escudo-medium {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+  }
+  
+  // Escudos grandes (detalle de equipo)
+  &--escudo-large {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+  }
+  
+  // Fotos de jugadores (circular)
+  &--foto-jugador {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  // Logos de patrocinadores
+  &--logo-patrocinador {
+    width: 150px;
+    height: 60px;
+    object-fit: contain;
+  }
+  
+  // Banners de campañas
+  &--banner {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+}
+
+// Estilos para modo oscuro (tema SportZone)
+@media (prefers-color-scheme: dark) {
+  img[appLazyLoad] {
+    &.lazy-loading {
+      background: linear-gradient(
+        90deg,
+        #06090f 25%,
+        #0d1117 50%,
+        #06090f 75%
+      );
+    }
+    
+    &.lazy-error {
+      background-color: #0d1117;
+      border-color: #ff2d55;
+    }
+  }
+}
+
+// Estilos responsive
+@media (max-width: 768px) {
+  .lazy-image {
+    &--escudo-large {
+      width: 80px;
+      height: 80px;
+    }
+    
+    &--foto-jugador {
+      width: 60px;
+      height: 60px;
+    }
+    
+    &--logo-patrocinador {
+      width: 100px;
+      height: 40px;
+    }
+  }
+}
+
+// Utilidades adicionales
+.lazy-container {
+  position: relative;
+  overflow: hidden;
+  
+  // Skeleton loader mientras carga
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.05),
+      transparent
+    );
+    animation: skeleton-loading 1.5s infinite;
+  }
+  
+  img.lazy-loaded + &::before {
+    display: none;
+  }
+}
+
+@keyframes skeleton-loading {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+// Prevenir layout shift
+img[appLazyLoad] {
+  // Mantener aspect ratio durante la carga
+  &[width][height] {
+    aspect-ratio: attr(width) / attr(height);
+  }
+}
+
+// Optimización de rendimiento
+img[appLazyLoad] {
+  // Usar GPU para animaciones
+  will-change: opacity, transform;
+  
+  // Optimizar renderizado
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  
+  &.lazy-loaded {
+    will-change: auto; // Liberar recursos después de cargar
+  }
+}

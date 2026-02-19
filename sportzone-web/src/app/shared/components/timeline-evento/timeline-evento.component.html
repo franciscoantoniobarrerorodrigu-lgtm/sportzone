@@ -1,0 +1,31 @@
+<div class="timeline-evento" [class]="eventoClass" [class.is-last]="isLast">
+  <div class="timeline-line"></div>
+  
+  <div class="evento-marker">
+    <span class="evento-icon">{{ eventoIcon }}</span>
+  </div>
+  
+  <div class="evento-content">
+    <div class="evento-header">
+      <span class="evento-minuto">{{ evento.minuto }}'</span>
+      <span class="evento-tipo">{{ eventoLabel }}</span>
+    </div>
+    
+    <div class="evento-details">
+      @if (evento.jugador) {
+        <div class="evento-jugador">
+          <strong>{{ evento.jugador }}</strong>
+          @if (evento.asistente) {
+            <span class="asistencia">(Asist: {{ evento.asistente }})</span>
+          }
+        </div>
+      }
+      
+      <div class="evento-equipo">{{ evento.equipo }}</div>
+      
+      @if (evento.descripcion) {
+        <div class="evento-descripcion">{{ evento.descripcion }}</div>
+      }
+    </div>
+  </div>
+</div>

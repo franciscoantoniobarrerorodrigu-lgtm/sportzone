@@ -1,0 +1,272 @@
+<div class="resoluciones-container">
+  <div class="header">
+    <h1 class="page-title">RESOLUCIONES</h1>
+    <button class="btn-primary" (click)="abrirFormularioCrear()">
+      ➕ Nueva Resolución
+    </button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filtros">
+    <div class="filtro-group">
+      <label>Tipo:</label>
+      <select [(ngModel)]="filtroTipo" (change)="aplicarFiltros()" class="select-filtro">
+        <option value="">Todos</option>
+        <option value="disciplinaria">Disciplinaria</option>
+        <option value="administrativa">Administrativa</option>
+        <option value="tecnica">Técnica</option>
+      </select>
+    </div>
+
+    <div class="filtro-group">
+      <label>Estado:</label>
+      <select [(ngModel)]="filtroEstado" (change)="aplicarFiltros()" class="select-filtro">
+        <option value="">Todos</option>
+        <option value="borrador">Borrador</option>
+        <option value="emitida">Emitida</option>
+        <option value="apelada">Apelada</option>
+        <option value="resuelta">Resuelta</option>
+        <option value="anulada">Anulada</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Lista de Resoluciones -->
+  @if (loading()) {
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Cargando resoluciones...</p>
+    </div>
+  } @else {
+    <div class="resoluciones-list">
+      @for (resolucion of resoluciones(); track resolucion.id) {
+        <div class="resolucion-card">
+          <div class="card-header">
+            <div class="titulo-section">
+              <span class="numero">{{ resolucion.numero }}</span>
+              <h3 class="titulo">{{ resolucion.asunto }}</h3>
+            </div>
+            <div class="badges">
+              <span class="badge-tipo" [attr.data-tipo]="resolucion.tipo">
+                {{ getTipoLabel(resolucion.tipo) }}
+              </span>
+              <span class="badge-estado" [attr.data-estado]="resolucion.estado">
+                {{ getEstadoLabel(resolucion.estado) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="card-body">
+            @if (resolucion.motivo) {
+              <p class="motivo">{{ resolucion.motivo }}</p>
+            }
+            
+            @if (resolucion.sancionTipo) {
+              <div class="sancion-info">
+                <span class="badge-sancion" [attr.data-sancion]="resolucion.sancionTipo">
+                  {{ getSancionTipoLabel(resolucion.sancionTipo) }}
+                  @if (resolucion.sancionValor) {
+                    <span class="sancion-valor">: {{ resolucion.sancionValor }}</span>
+                  }
+                </span>
+              </div>
+            }
+            
+            <div class="metadata">
+              @if (resolucion.equipoNombre) {
+                <span class="meta-item">⚽ {{ resolucion.equipoNombre }}</span>
+              }
+              @if (resolucion.jugadorNombre) {
+                <span class="meta-item">👤 {{ resolucion.jugadorNombre }}</span>
+              }
+              @if (resolucion.fechaEmision) {
+                <span class="meta-item">📅 Emitida: {{ formatDate(resolucion.fechaEmision) }}</span>
+              }
+              <span class="meta-item">🕒 Creada: {{ formatDate(resolucion.createdAt) }}</span>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            @if (resolucion.estado === 'borrador') {
+              <button class="btn-success" (click)="aplicarResolucion(resolucion)">
+                ✓ Aplicar Resolución
+              </button>
+            }
+            @if (resolucion.estado === 'emitida' || resolucion.estado === 'resuelta') {
+              <button class="btn-danger" (click)="anularResolucion(resolucion)">
+                ✗ Anular Resolución
+              </button>
+            }
+            <button class="btn-secondary" (click)="verDetalle(resolucion)">
+              👁 Ver Detalle
+            </button>
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-state">
+          <p>No hay resoluciones que coincidan con los filtros</p>
+        </div>
+      }
+    </div>
+
+    <!-- Paginación -->
+    @if (totalPages() > 1) {
+      <div class="paginacion">
+        <button 
+          class="btn-page" 
+          [disabled]="paginaActual() === 1"
+          (click)="cambiarPagina(paginaActual() - 1)"
+        >
+          ← Anterior
+        </button>
+        
+        <span class="page-info">
+          Página {{ paginaActual() }} de {{ totalPages() }}
+        </span>
+        
+        <button 
+          class="btn-page" 
+          [disabled]="paginaActual() === totalPages()"
+          (click)="cambiarPagina(paginaActual() + 1)"
+        >
+          Siguiente →
+        </button>
+      </div>
+    }
+  }
+
+  <!-- Modal de Creación -->
+  @if (mostrarFormulario()) {
+    <div class="modal-overlay" (click)="cerrarFormulario()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Nueva Resolución</h2>
+          <button class="btn-close" (click)="cerrarFormulario()">✕</button>
+        </div>
+
+        <form class="form" (ngSubmit)="crearResolucion()">
+          <div class="form-group">
+            <label>Tipo *</label>
+            <select [(ngModel)]="nuevaResolucion.tipo" name="tipo" required class="form-control">
+              <option value="">Seleccionar...</option>
+              <option value="disciplinaria">Disciplinaria</option>
+              <option value="administrativa">Administrativa</option>
+              <option value="tecnica">Técnica</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Asunto *</label>
+            <input 
+              type="text" 
+              [(ngModel)]="nuevaResolucion.asunto" 
+              name="asunto"
+              required
+              class="form-control"
+              placeholder="Asunto de la resolución"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Motivo</label>
+            <textarea 
+              [(ngModel)]="nuevaResolucion.motivo" 
+              name="motivo"
+              class="form-control"
+              rows="4"
+              placeholder="Motivo detallado de la resolución..."
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Tipo de Sanción</label>
+            <select [(ngModel)]="nuevaResolucion.sancionTipo" name="sancionTipo" class="form-control">
+              <option value="">Sin sanción</option>
+              <option value="suspension">Suspensión</option>
+              <option value="descuento_puntos">Descuento de Puntos</option>
+              <option value="multa">Multa</option>
+              <option value="wo_tecnico">W.O. Técnico</option>
+              <option value="amonestacion">Amonestación</option>
+            </select>
+          </div>
+
+          @if (nuevaResolucion.sancionTipo) {
+            <div class="form-group">
+              <label>
+                Valor de Sanción
+                @if (nuevaResolucion.sancionTipo === 'suspension') {
+                  (Número de partidos)
+                } @else if (nuevaResolucion.sancionTipo === 'descuento_puntos') {
+                  (Puntos a descontar)
+                } @else if (nuevaResolucion.sancionTipo === 'multa') {
+                  (Monto)
+                }
+              </label>
+              <input 
+                type="number" 
+                [(ngModel)]="nuevaResolucion.sancionValor" 
+                name="sancionValor"
+                class="form-control"
+                placeholder="Valor"
+                min="0"
+              />
+            </div>
+          }
+
+          <div class="form-group">
+            <label>ID de Equipo (opcional)</label>
+            <input 
+              type="text" 
+              [(ngModel)]="nuevaResolucion.equipoId" 
+              name="equipoId"
+              class="form-control"
+              placeholder="UUID del equipo"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>ID de Jugador (opcional)</label>
+            <input 
+              type="text" 
+              [(ngModel)]="nuevaResolucion.jugadorId" 
+              name="jugadorId"
+              class="form-control"
+              placeholder="UUID del jugador"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>ID de Partido (opcional)</label>
+            <input 
+              type="text" 
+              [(ngModel)]="nuevaResolucion.partidoId" 
+              name="partidoId"
+              class="form-control"
+              placeholder="UUID del partido (para W.O. técnico)"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>ID de Solicitud (opcional)</label>
+            <input 
+              type="text" 
+              [(ngModel)]="nuevaResolucion.solicitudId" 
+              name="solicitudId"
+              class="form-control"
+              placeholder="UUID de la solicitud relacionada"
+            />
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="cerrarFormulario()">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-primary" [disabled]="guardando()">
+              {{ guardando() ? 'Guardando...' : 'Crear Resolución' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
