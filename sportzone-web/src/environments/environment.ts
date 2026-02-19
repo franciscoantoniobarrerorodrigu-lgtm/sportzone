@@ -1,7 +1,7 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:5000/api',
-  signalRUrl: 'http://localhost:5000/hubs',
+  apiUrl: 'https://sportzone-api-mslj.onrender.com/api',
+  signalRUrl: 'https://sportzone-api-mslj.onrender.com/hubs',
   supabase: {
     url: 'https://husilgpjmqqsccmvbbka.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1c2lsZ3BqbXFxc2NjbXZiYmthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE0Mzg5OTAsImV4cCI6MjA4NzAxNDk5MH0.hxaotT74-hFgE-nn_mFZQzGKLmqzDpzkUcApQ_XOuDU'
